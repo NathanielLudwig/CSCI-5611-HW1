@@ -6,17 +6,29 @@
  TODO: 
     1. Try to understand how this Breadth-first Search (BFS) implementation works.
        As a start, compare to the pseudocode at: https://en.wikipedia.org/wiki/Breadth-first_search
-       How do I represent nodes? How do I represent edges?
-       What is the purpose of the visited list? What about the parent list?
-       What is getting added to the fringe? In what order?
+       How do I represent nodes?
+       A: neighbors 
+       How do I represent edges? 
+       A:neighbors[i]
+       What is the purpose of the visited list?
+       A: don't visit the same node twice
+       What about the parent list?
+       A: keep track of reverse path
+       What is getting added to the fringe?
+       A: neighbors of the current node
+       In what order?
+       A: FIFO
        How do I find the path once I've found the goal?
+       A: follow the parent pointers
     2. Convert this Breadth-first Search to a Depth-First Search.
        Which version BFS or DFS has a smaller maximum fring size?
+       A: DFS
     3. Currently, the code sets up a graph which follows this tree-like structure: https://snipboard.io/6BhxRd.jpg
        Change it to plan a path from node 0 to node 7 over this graph instead: https://snipboard.io/VIx6Er.jpg
        How do we know the graph is no longer a tree?
+       A: node 4 has two nodes pointing to it
        Does Breadth-first Search still find the optimal path?
-       
+       A: yes
  CHALLENGE:
     1. Make a new graph where there is a cycle. DFS should fail. Does it? Why?
     2. Add a maximum depth limit to DFS. Now can it handle cycles?
@@ -42,10 +54,13 @@ for (int i = 0; i < numNodes; i++) {
 }
 
 //Set which nodes are connected to which neighbors
-neighbors[0].add(1); neighbors[0].add(2); //0 -> 1 & 2
-neighbors[1].add(3); neighbors[1].add(4); //1 -> 3 & 4 
-neighbors[2].add(5); neighbors[2].add(6); //2 -> 5 & 6
-neighbors[4].add(7);                      //4 -> 7
+neighbors[0].add(1); neighbors[0].add(3); //0 -> 1 & 3
+neighbors[1].add(2); neighbors[1].add(4); //1 -> 2 & 4 
+neighbors[2].add(7); //2 -> 7
+neighbors[3].add(4); neighbors[3].add(6); //3 -> 4 & 6 
+neighbors[4].add(5); //4 -> 5
+neighbors[5].add(7); //5 -> 7
+neighbors[6].add(5); //6 -> 5
 
 println("List of Neighbors:");
 println(neighbors);
@@ -64,7 +79,7 @@ println("Adding node", start, "(start) to the fringe.");
 println(" Current Fring: ", fringe);
 
 while (fringe.size() > 0){
-  int fringeTop = 0;
+  int fringeTop = fringe.size() - 1;
   int currentNode = fringe.get(fringeTop);
   fringe.remove(fringeTop);
   if (currentNode == goal){
