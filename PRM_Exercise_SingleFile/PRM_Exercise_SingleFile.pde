@@ -11,6 +11,7 @@ TODO:
   2. Currently edge connections of any length are allowed. Update the connectNeighbors()
      function to only allow edges if their length is less than 200 pixels. What use is there
      for this? Why do you think people sometimes put a maximum length on PRM edges?
+     A: it might look more natural to limit the maximum length of edges
   3. The function, closestNode() is supposed to return the ID of the PRM node 
      that is closest to the passed-in point. However, it currently returns a 
      random node. Once you fix the function, you should see that clicking with 
@@ -83,8 +84,8 @@ void draw(){
   
   //Draw the box obstacles
   //TODO: Uncomment this to draw the box
-  //fill(250,200,200);
-  //rect(boxTopLeft.x, boxTopLeft.y, boxW, boxH);
+  fill(250,200,200);
+  rect(boxTopLeft.x, boxTopLeft.y, boxW, boxH);
   
   //Draw PRM Nodes
   fill(0);
@@ -124,6 +125,10 @@ void keyPressed(){
   if (key == 'r'){
     //TODO: Randomize obstacle positions and radii
     //      Also, replan for these new obstacles.
+    placeRandomObstacles();
+    buildPRM(circlePos, circleRad, boxTopLeft, boxW, boxH);
+    runBFS(closestNode(startPos),closestNode(goalPos));
+    return;
   }
   
   if (keyCode == RIGHT){
@@ -138,11 +143,22 @@ void keyPressed(){
   if (keyCode == DOWN){
     boxTopLeft.y += 10;
   }
+  buildPRM(circlePos, circleRad, boxTopLeft, boxW, boxH);
+  runBFS(closestNode(startPos),closestNode(goalPos));
 }
 
 int closestNode(Vec2 point){
   //TODO: Return the closest node the passed in point
-  return int(random(numNodes));
+  int closest = -1;
+  float closestDist = Float.MAX_VALUE;
+  for (int i = 0; i < numNodes; i++) {
+    float dist = point.distanceTo(nodePos[i]);
+    if (dist < closestDist) {
+      closestDist = dist;
+      closest = i;
+    }
+  }
+  return closest;
 }
 
 void mousePressed(){
@@ -160,7 +176,11 @@ void mousePressed(){
 //Returns true if the point is inside a box
 boolean pointInBox(Vec2 boxTopLeft, float boxW, float boxH, Vec2 pointPos){
   //TODO: Return true if the point is actually inside the box
-  return false;
+  if (boxTopLeft.x < pointPos.x && boxTopLeft.y < pointPos.y && boxTopLeft.x + boxW > pointPos.x  && boxTopLeft.y + boxH > pointPos.y) {
+    return true;
+  } else {
+    return false;
+  }
 }
 
 //Returns true if the point is inside a circle
@@ -319,6 +339,11 @@ void generateRandomNodes(Vec2[] circleCenters, float[] circleRadii, Vec2 boxTopL
       randPos = new Vec2(random(width),random(height));
       insideAnyCircle = pointInCircleList(circleCenters,circleRadii,randPos);
     }
+    boolean insideAnyBox = pointInBox(boxTopLeft, boxW, boxH, randPos);
+    while (insideAnyBox){
+      randPos = new Vec2(random(width),random(height));
+      insideAnyBox = pointInBox(boxTopLeft, boxW, boxH, randPos);
+    }
     nodePos[i] = randPos;
   }
 }
@@ -332,8 +357,12 @@ void connectNeighbors(){
       if (i == j) continue; //don't connect to myself 
       Vec2 dir = nodePos[j].minus(nodePos[i]).normalized();
       float distBetween = nodePos[i].distanceTo(nodePos[j]);
+      if (distBetween > 200) {
+        continue;
+      }
       hitInfo circleListCheck = rayCircleListIntesect(circlePos, circleRad, nodePos[i], dir, distBetween);
-      if (!circleListCheck.hit){
+      hitInfo boxCheck = rayBoxIntersect(boxTopLeft, boxW, boxH, nodePos[i], dir, distBetween);
+      if (!circleListCheck.hit && !boxCheck.hit){
         neighbors[i].add(j);
       }
     }
